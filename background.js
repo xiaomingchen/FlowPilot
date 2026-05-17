@@ -10692,6 +10692,7 @@ const generatedEmailHelpers = self.MultiPageGeneratedEmailHelpers?.createGenerat
   DUCK_AUTOFILL_URL,
   fetch,
   fetchIcloudHideMyEmail,
+  generateRandomName,
   getCloudflareTempEmailAddressFromResponse,
   getCloudflareTempEmailConfig,
   getCustomEmailPoolEmail: getCustomEmailPoolEmailForRun,
@@ -10707,6 +10708,7 @@ const generatedEmailHelpers = self.MultiPageGeneratedEmailHelpers?.createGenerat
   reuseOrCreateTab,
   sendToContentScript,
   setEmailState,
+  setState,
   throwIfStopped,
 });
 
@@ -12318,6 +12320,7 @@ const step5Executor = self.MultiPageBackgroundStep5?.createStep5Executor({
   addLog,
   generateRandomBirthday,
   generateRandomName,
+  getState,
   sendToContentScript,
 });
 const step6Executor = self.MultiPageBackgroundStep6?.createStep6Executor({

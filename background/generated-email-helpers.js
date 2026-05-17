@@ -11,6 +11,7 @@
       DUCK_AUTOFILL_URL,
       fetch,
       fetchIcloudHideMyEmail,
+      generateRandomName = null,
       getCloudflareTempEmailAddressFromResponse,
       getCloudflareTempEmailConfig,
       getCustomEmailPoolEmail,
@@ -26,6 +27,7 @@
       reuseOrCreateTab,
       sendToContentScript,
       setEmailState,
+      setState = null,
       throwIfStopped,
     } = deps;
 
@@ -158,7 +160,20 @@
         requireAdminAuth: true,
         requireDomain: true,
       });
-      const requestedName = String(options.localPart || options.name || '').trim().toLowerCase() || generateCloudflareAliasLocalPart();
+
+      // Generate email prefix using firstname.lastname pattern
+      let requestedName = String(options.localPart || options.name || '').trim().toLowerCase();
+      let generatedProfileName = null;
+      if (!requestedName) {
+        if (typeof generateRandomName === 'function') {
+          const name = generateRandomName();
+          requestedName = `${name.firstName}.${name.lastName}`.toLowerCase();
+          generatedProfileName = { firstName: name.firstName, lastName: name.lastName };
+        } else {
+          requestedName = generateCloudflareAliasLocalPart();
+        }
+      }
+
       const payload = {
         enablePrefix: true,
         enableRandomSubdomain: Boolean(config.useRandomSubdomain),
@@ -172,6 +187,15 @@
       const address = normalizeCloudflareTempEmailAddress(getCloudflareTempEmailAddressFromResponse(result));
       if (!address) {
         throw new Error('Cloudflare Temp Email 未返回可用邮箱地址。');
+      }
+
+      // Store generated name in state for later use in Step 5
+      if (generatedProfileName && typeof setState === 'function') {
+        await setState({
+          cloudflareGeneratedFirstName: generatedProfileName.firstName,
+          cloudflareGeneratedLastName: generatedProfileName.lastName,
+        });
+        await addLog(`Cloudflare Temp Email：已生成姓名 ${generatedProfileName.firstName} ${generatedProfileName.lastName}，邮箱前缀 ${requestedName}`, 'info');
       }
 
       await persistResolvedEmailState(latestState, address, {

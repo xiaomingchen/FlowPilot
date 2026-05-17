@@ -6,11 +6,32 @@
       addLog,
       generateRandomBirthday,
       generateRandomName,
+      getState = null,
       sendToContentScript,
     } = deps;
 
     async function executeStep5() {
-      const { firstName, lastName } = generateRandomName();
+      let firstName, lastName;
+
+      // Try to use stored name from Cloudflare Temp Email generation
+      if (typeof getState === 'function') {
+        try {
+          const state = await getState();
+          if (state?.cloudflareGeneratedFirstName && state?.cloudflareGeneratedLastName) {
+            firstName = state.cloudflareGeneratedFirstName;
+            lastName = state.cloudflareGeneratedLastName;
+            await addLog(`步骤 5：使用已存储的姓名 ${firstName} ${lastName}（来自 Cloudflare Temp Email 生成）`);
+          }
+        } catch {}
+      }
+
+      // Fallback to generating a new random name
+      if (!firstName || !lastName) {
+        const name = generateRandomName();
+        firstName = name.firstName;
+        lastName = name.lastName;
+      }
+
       const { year, month, day } = generateRandomBirthday();
 
       await addLog(`步骤 5：已生成姓名 ${firstName} ${lastName}，生日 ${year}-${month}-${day}`);
