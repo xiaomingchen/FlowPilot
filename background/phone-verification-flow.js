@@ -115,6 +115,9 @@
       { prefix: '1', id: 187, label: 'USA' },
     ]);
     const activationPriceHintsByKey = new Map();
+    const DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS = 12;
+    const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN = 1;
+    const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX = 72;
     let activePhoneVerificationLogStep = null;
     let activePhoneVerificationLogStepKey = null;
 
@@ -563,6 +566,14 @@
         return DEFAULT_PHONE_CODE_POLL_ROUNDS;
       }
       return Math.max(PHONE_CODE_POLL_ROUNDS_MIN, Math.min(PHONE_CODE_POLL_ROUNDS_MAX, parsed));
+    }
+
+    function normalizeSignupTempNumberDurationHours(value) {
+      const parsed = Math.floor(Number(value));
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS;
+      }
+      return Math.max(SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN, Math.min(SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX, parsed));
     }
 
     function resolvePhoneCodePollMaxRoundsForWindow(waitSeconds, pollIntervalSeconds, configuredMaxRounds) {
@@ -3548,6 +3559,35 @@
     }
 
     async function requestPhoneActivation(state = {}, options = {}) {
+      if (options?.useSignupTempNumber) {
+        const tempNumberDurationHours = normalizeSignupTempNumberDurationHours(state?.signupPhoneTempNumberDurationHours);
+        const config = resolvePhoneConfig(state);
+        const allCountryCandidates = Array.isArray(config.countryCandidates) && config.countryCandidates.length
+          ? config.countryCandidates
+          : resolveCountryCandidates(state);
+        
+        if (!allCountryCandidates.length) {
+          throw new Error(`步骤 2：HeroSMS 国家列表为空，请在接码设置中选择至少一个国家。`);
+        }
+
+        let lastError = null;
+        for (const countryConfig of allCountryCandidates) {
+          try {
+            await addLog(
+              `步骤 2：已启用临时取号，正在通过 HeroSMS getRentNumber 获取 ${countryConfig.label} 号码（duration=${tempNumberDurationHours}h）。`,
+              'info'
+            );
+            const activation = await requestHeroSmsRentActivation(config, countryConfig, tempNumberDurationHours);
+            return activation;
+          } catch (error) {
+            lastError = error;
+            await addLog(`步骤 2：临时取号在 ${countryConfig.label} 失败：${error.message}，尝试下一个国家...`, 'warn');
+            continue;
+          }
+        }
+        throw lastError || new Error('HeroSMS 临时取号失败，所有候选国家均不可用。');
+      }
+
       if (normalizePhoneSmsProvider(state?.phoneSmsProvider) === PHONE_SMS_PROVIDER_FIVE_SIM) {
         const provider = getFiveSimProviderForState(state);
         if (provider) {
@@ -7056,6 +7096,39 @@
         activePhoneVerificationLogStep = previousLogStep;
         activePhoneVerificationLogStepKey = previousLogStepKey;
       }
+    }
+
+    async function requestHeroSmsRentActivation(config, countryConfig, durationHours = DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS) {
+      const apiKey = normalizeApiKey(config?.apiKey);
+      if (!apiKey) {
+        throw new Error('HeroSMS API key is missing. Save it in the side panel before running the phone flow.');
+      }
+      const normalizedDurationHours = normalizeSignupTempNumberDurationHours(durationHours);
+      const payload = await fetchHeroSmsPayload(
+        {
+          ...config,
+          apiKey,
+        },
+        {
+          action: 'getRentNumber',
+          service: HERO_SMS_SERVICE_CODE,
+          country: countryConfig.id,
+          duration: normalizedDurationHours,
+          api_key: apiKey,
+        },
+        'HeroSMS getRentNumber'
+      );
+      const activation = parseActivationPayload(payload, {
+        provider: PHONE_SMS_PROVIDER_HERO,
+        serviceCode: HERO_SMS_SERVICE_CODE,
+        countryId: countryConfig.id,
+        countryLabel: countryConfig.label,
+      });
+      if (!activation) {
+        const text = describeHeroSmsPayload(payload);
+        throw new Error(`HeroSMS getRentNumber failed: ${text || 'empty response'}`);
+      }
+      return activation;
     }
 
     return {

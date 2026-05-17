@@ -229,6 +229,8 @@ const inputPhoneCodePollIntervalSeconds = { value: '5' };
 const inputPhoneCodePollMaxRounds = { value: '4' };
 const inputAccountRunHistoryTextEnabled = { checked: true };
 const inputAccountRunHistoryHelperBaseUrl = { value: 'http://127.0.0.1:17373' };
+const inputSignupPhoneUseTempNumber = { checked: false };
+const inputSignupPhoneTempNumberDurationHours = { value: '12' };
 const inputInbucketHost = { value: 'inbucket.local' };
 const inputInbucketMailbox = { value: 'demo' };
 const inputHotmailRemoteBaseUrl = { value: 'https://hotmail.example.com' };
@@ -316,6 +318,7 @@ function normalizePhoneCodeWaitSecondsValue(value, fallback = 60) { const parsed
 function normalizePhoneCodeTimeoutWindowsValue(value, fallback = 2) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
 function normalizePhoneCodePollIntervalSecondsValue(value, fallback = 5) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
 function normalizePhoneCodePollMaxRoundsValue(value, fallback = 4) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
+function normalizeSignupTempNumberDurationHoursSafe(value, fallback = 12) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.min(72, parsed)) : Math.max(1, Math.min(72, Number(fallback) || 12)); }
 function getSelectedHeroSmsCountryOption() { return { id: 52, label: 'Thailand' }; }
 function syncHeroSmsFallbackSelectionOrderFromSelect() { return [{ id: 52, label: 'Thailand' }]; }
 ${bundle}

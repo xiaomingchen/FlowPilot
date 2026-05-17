@@ -950,12 +950,17 @@ const inputPhoneCodeTimeoutWindows = { value: '3' };
 const inputPhoneCodePollIntervalSeconds = { value: '6' };
 const inputPhoneCodePollMaxRounds = { value: '18' };
 const inputAccountRunHistoryHelperBaseUrl = { value: 'http://127.0.0.1:17373' };
+const inputSignupPhoneUseTempNumber = { checked: false };
+const inputSignupPhoneTempNumberDurationHours = { value: '12' };
 const DEFAULT_VERIFICATION_RESEND_COUNT = 4;
 const DEFAULT_PHONE_VERIFICATION_REPLACEMENT_LIMIT = 3;
 const DEFAULT_PHONE_CODE_WAIT_SECONDS = 60;
 const DEFAULT_PHONE_CODE_TIMEOUT_WINDOWS = 2;
 const DEFAULT_PHONE_CODE_POLL_INTERVAL_SECONDS = 5;
 const DEFAULT_PHONE_CODE_POLL_MAX_ROUNDS = 4;
+const DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS = 12;
+const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN = 1;
+const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX = 72;
 const PHONE_CODE_WAIT_SECONDS_MIN = 15;
 const PHONE_CODE_WAIT_SECONDS_MAX = 300;
 const PHONE_CODE_TIMEOUT_WINDOWS_MIN = 1;
@@ -1055,6 +1060,7 @@ function getSelectedFiveSimCountries() {
 function getSelectedNexSmsCountries() {
   return [{ id: 1, label: 'Country #1' }];
 }
+${extractFunction('normalizeSignupTempNumberDurationHoursSafe')}
 ${extractFunction('collectSettingsPayload')}
 return { collectSettingsPayload };
 `)(normalizeIcloudTargetMailboxType, normalizeIcloudForwardMailProvider);

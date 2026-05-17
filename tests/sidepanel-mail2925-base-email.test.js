@@ -205,6 +205,8 @@ const inputAutoDelayMinutes = { value: '30' };
 const inputAutoStepDelaySeconds = { value: '' };
 const inputOAuthFlowTimeoutEnabled = { checked: true };
 const inputVerificationResendCount = { value: '4' };
+const inputSignupPhoneUseTempNumber = { checked: false };
+const inputSignupPhoneTempNumberDurationHours = { value: '12' };
 const DEFAULT_VERIFICATION_RESEND_COUNT = 4;
 const PHONE_SMS_PROVIDER_HERO_SMS = 'hero-sms';
 const PHONE_SMS_PROVIDER_FIVE_SIM = '5sim';
@@ -277,6 +279,7 @@ function normalizePhoneCodeWaitSecondsValue(value, fallback = 60) { const parsed
 function normalizePhoneCodeTimeoutWindowsValue(value, fallback = 2) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
 function normalizePhoneCodePollIntervalSecondsValue(value, fallback = 5) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
 function normalizePhoneCodePollMaxRoundsValue(value, fallback = 4) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) ? parsed : fallback; }
+function normalizeSignupTempNumberDurationHoursSafe(value, fallback = 12) { const parsed = Number.parseInt(String(value ?? '').trim(), 10); return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.min(72, parsed)) : Math.max(1, Math.min(72, Number(fallback) || 12)); }
 function getSelectedHeroSmsCountryOption() { return { id: 52, label: 'Thailand' }; }
 function syncHeroSmsFallbackSelectionOrderFromSelect() { return [{ id: 52, label: 'Thailand' }]; }
 ${bundle}

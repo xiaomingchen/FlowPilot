@@ -449,6 +449,8 @@ const inputHeroSmsReuseEnabled = document.getElementById('input-hero-sms-reuse-e
 const inputFreePhoneReuseEnabled = document.getElementById('input-free-phone-reuse-enabled');
 const inputFreePhoneReuseAutoEnabled = document.getElementById('input-free-phone-reuse-auto-enabled');
 const inputFreeReusablePhone = document.getElementById('input-free-reusable-phone');
+const inputSignupPhoneUseTempNumber = document.getElementById('input-signup-phone-use-temp-number');
+const inputSignupPhoneTempNumberDurationHours = document.getElementById('input-signup-phone-temp-number-duration-hours');
 const selectHeroSmsCountry = document.getElementById('select-hero-sms-country');
 const selectHeroSmsCountryFallback = document.getElementById('select-hero-sms-country-fallback');
 const selectHeroSmsAcquirePriority = document.getElementById('select-hero-sms-acquire-priority');
@@ -4033,6 +4035,12 @@ function collectSettingsPayload() {
     fiveSimCountryFallback,
     fiveSimMaxPrice: fiveSimMaxPriceValue,
     fiveSimMinPrice: fiveSimMinPriceValue,
+    signupPhoneUseTempNumber: typeof inputSignupPhoneUseTempNumber !== 'undefined' && inputSignupPhoneUseTempNumber
+      ? Boolean(inputSignupPhoneUseTempNumber.checked)
+      : Boolean(latestState?.signupPhoneUseTempNumber),
+    signupPhoneTempNumberDurationHours: typeof inputSignupPhoneTempNumberDurationHours !== 'undefined' && inputSignupPhoneTempNumberDurationHours
+      ? normalizeSignupTempNumberDurationHoursSafe(inputSignupPhoneTempNumberDurationHours.value)
+      : normalizeSignupTempNumberDurationHoursSafe(latestState?.signupPhoneTempNumberDurationHours),
   };
 }
 
@@ -4842,6 +4850,22 @@ function normalizePhoneCodePollMaxRoundsValue(value, fallback = DEFAULT_PHONE_CO
     );
   }
   return Math.max(PHONE_CODE_POLL_MAX_ROUNDS_MIN, Math.min(PHONE_CODE_POLL_MAX_ROUNDS_MAX, parsed));
+}
+
+const DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS = 12;
+const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN = 1;
+const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX = 72;
+
+function normalizeSignupTempNumberDurationHoursSafe(value, fallback = DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS) {
+  const rawValue = String(value ?? '').trim();
+  const parsed = Number.parseInt(rawValue, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return Math.max(
+      SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN,
+      Math.min(SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX, Number(fallback) || DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS)
+    );
+  }
+  return Math.max(SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN, Math.min(SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX, parsed));
 }
 
 function normalizeHeroSmsReuseEnabledValue(value, fallbackValue = undefined) {
@@ -9586,6 +9610,14 @@ function applySettingsState(state) {
   if (typeof inputPhoneCodePollMaxRounds !== 'undefined' && inputPhoneCodePollMaxRounds) {
     inputPhoneCodePollMaxRounds.value = String(
       normalizePhoneCodePollMaxRoundsValue(state?.phoneCodePollMaxRounds, DEFAULT_PHONE_CODE_POLL_MAX_ROUNDS)
+    );
+  }
+  if (typeof inputSignupPhoneUseTempNumber !== 'undefined' && inputSignupPhoneUseTempNumber) {
+    inputSignupPhoneUseTempNumber.checked = Boolean(state?.signupPhoneUseTempNumber);
+  }
+  if (typeof inputSignupPhoneTempNumberDurationHours !== 'undefined' && inputSignupPhoneTempNumberDurationHours) {
+    inputSignupPhoneTempNumberDurationHours.value = String(
+      normalizeSignupTempNumberDurationHoursSafe(state?.signupPhoneTempNumberDurationHours)
     );
   }
   if (typeof applyHeroSmsFallbackSelection === 'function') {

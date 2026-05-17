@@ -303,7 +303,9 @@
       if (typeof phoneVerificationHelpers?.prepareSignupPhoneActivation !== 'function') {
         throw new Error('手机号注册流程不可用：接码模块尚未初始化。');
       }
-      const activation = await phoneVerificationHelpers.prepareSignupPhoneActivation(state);
+      const activation = await phoneVerificationHelpers.prepareSignupPhoneActivation(state, {
+        useSignupTempNumber: Boolean(state?.signupPhoneUseTempNumber),
+      });
       return {
         phoneNumber: activation.phoneNumber,
         activation,
