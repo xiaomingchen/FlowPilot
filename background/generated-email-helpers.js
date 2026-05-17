@@ -187,36 +187,55 @@
         }
       }
 
-      const payload = {
-        enablePrefix: true,
-        enableRandomSubdomain: Boolean(config.useRandomSubdomain),
-        name: requestedName,
-        domain: config.domain,
-      };
-      const result = await requestCloudflareTempEmailJson(config, '/admin/new_address', {
-        method: 'POST',
-        payload,
-      });
-      const address = normalizeCloudflareTempEmailAddress(getCloudflareTempEmailAddressFromResponse(result));
-      if (!address) {
-        throw new Error('Cloudflare Temp Email 未返回可用邮箱地址。');
+      const baseName = requestedName;
+      const CFTE_DUPLICATE_MAX_RETRIES = 10;
+      let lastError = null;
+
+      for (let attempt = 0; attempt <= CFTE_DUPLICATE_MAX_RETRIES; attempt += 1) {
+        const currentName = attempt === 0 ? baseName : `${baseName}${attempt + 1}`;
+        const payload = {
+          enablePrefix: true,
+          enableRandomSubdomain: Boolean(config.useRandomSubdomain),
+          name: currentName,
+          domain: config.domain,
+        };
+        try {
+          const result = await requestCloudflareTempEmailJson(config, '/admin/new_address', {
+            method: 'POST',
+            payload,
+          });
+          const address = normalizeCloudflareTempEmailAddress(getCloudflareTempEmailAddressFromResponse(result));
+          if (!address) {
+            throw new Error('Cloudflare Temp Email 未返回可用邮箱地址。');
+          }
+
+          // Store generated name in state for later use in Step 5
+          if (generatedProfileName && typeof setState === 'function') {
+            await setState({
+              cloudflareGeneratedFirstName: generatedProfileName.firstName,
+              cloudflareGeneratedLastName: generatedProfileName.lastName,
+            });
+            await addLog(`Cloudflare Temp Email：已生成姓名 ${generatedProfileName.firstName} ${generatedProfileName.lastName}，邮箱前缀 ${currentName}`, 'info');
+          }
+
+          await persistResolvedEmailState(latestState, address, {
+            source: 'generated:cloudflare-temp-email',
+            preserveAccountIdentity: Boolean(options?.preserveAccountIdentity),
+          });
+          await addLog(`Cloudflare Temp Email：已生成 ${address}`, 'ok');
+          return address;
+        } catch (error) {
+          lastError = error;
+          const msg = String(error?.message || '').toLowerCase();
+          if (/already\s*exists|duplicate|conflict|409|已存在|重名|exist/i.test(msg)) {
+            await addLog(`Cloudflare Temp Email：邮箱前缀 ${currentName} 已存在，尝试递增后缀...`, 'warn');
+            continue;
+          }
+          throw error;
+        }
       }
 
-      // Store generated name in state for later use in Step 5
-      if (generatedProfileName && typeof setState === 'function') {
-        await setState({
-          cloudflareGeneratedFirstName: generatedProfileName.firstName,
-          cloudflareGeneratedLastName: generatedProfileName.lastName,
-        });
-        await addLog(`Cloudflare Temp Email：已生成姓名 ${generatedProfileName.firstName} ${generatedProfileName.lastName}，邮箱前缀 ${requestedName}`, 'info');
-      }
-
-      await persistResolvedEmailState(latestState, address, {
-        source: 'generated:cloudflare-temp-email',
-        preserveAccountIdentity: Boolean(options?.preserveAccountIdentity),
-      });
-      await addLog(`Cloudflare Temp Email：已生成 ${address}`, 'ok');
-      return address;
+      throw lastError || new Error('Cloudflare Temp Email 生成邮箱失败，重名递增后仍不可用。');
     }
 
     function normalizeEmailForComparison(value) {
