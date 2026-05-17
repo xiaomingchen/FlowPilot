@@ -165,12 +165,25 @@
       let requestedName = String(options.localPart || options.name || '').trim().toLowerCase();
       let generatedProfileName = null;
       if (!requestedName) {
-        if (typeof generateRandomName === 'function') {
-          const name = generateRandomName();
-          requestedName = `${name.firstName}.${name.lastName}`.toLowerCase();
-          generatedProfileName = { firstName: name.firstName, lastName: name.lastName };
-        } else {
-          requestedName = generateCloudflareAliasLocalPart();
+        // Try to use stored name from Step 5 profile generation
+        if (typeof getState === 'function') {
+          try {
+            const storedState = await getState();
+            if (storedState?.cloudflareGeneratedFirstName && storedState?.cloudflareGeneratedLastName) {
+              requestedName = `${storedState.cloudflareGeneratedFirstName}.${storedState.cloudflareGeneratedLastName}`.toLowerCase();
+              generatedProfileName = { firstName: storedState.cloudflareGeneratedFirstName, lastName: storedState.cloudflareGeneratedLastName };
+              await addLog(`Cloudflare Temp Email：使用已存储的姓名 ${generatedProfileName.firstName} ${generatedProfileName.lastName} 生成邮箱前缀`, 'info');
+            }
+          } catch {}
+        }
+        if (!requestedName) {
+          if (typeof generateRandomName === 'function') {
+            const name = generateRandomName();
+            requestedName = `${name.firstName}.${name.lastName}`.toLowerCase();
+            generatedProfileName = { firstName: name.firstName, lastName: name.lastName };
+          } else {
+            requestedName = generateCloudflareAliasLocalPart();
+          }
         }
       }
 

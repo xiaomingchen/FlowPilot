@@ -115,7 +115,7 @@
       { prefix: '1', id: 187, label: 'USA' },
     ]);
     const activationPriceHintsByKey = new Map();
-    const DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS = 12;
+    const DEFAULT_SIGNUP_TEMP_NUMBER_DURATION_HOURS = 2;
     const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MIN = 1;
     const SIGNUP_TEMP_NUMBER_DURATION_HOURS_MAX = 72;
     let activePhoneVerificationLogStep = null;
@@ -5203,6 +5203,7 @@
             {
               blockedCountryIds: useBlockedCountryIds,
               countryPriceFloorByCountryId: useCountryPriceFloorByCountryId,
+              useSignupTempNumber: options?.useSignupTempNumber,
             }
           );
           const providerLabel = getPhoneSmsProviderLabel(providerCandidate);

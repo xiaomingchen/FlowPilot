@@ -7,6 +7,7 @@
       generateRandomBirthday,
       generateRandomName,
       getState = null,
+      setState = null,
       sendToContentScript,
     } = deps;
 
@@ -30,6 +31,16 @@
         const name = generateRandomName();
         firstName = name.firstName;
         lastName = name.lastName;
+      }
+
+      // Save the name to state so email generation can use it later
+      if (typeof setState === 'function') {
+        try {
+          await setState({
+            cloudflareGeneratedFirstName: firstName,
+            cloudflareGeneratedLastName: lastName,
+          });
+        } catch {}
       }
 
       const { year, month, day } = generateRandomBirthday();

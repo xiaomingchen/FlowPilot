@@ -1029,6 +1029,8 @@ const PERSISTED_SETTING_DEFAULTS = {
   nexSmsCountryOrder: [...DEFAULT_NEX_SMS_COUNTRY_ORDER],
   nexSmsServiceCode: DEFAULT_NEX_SMS_SERVICE_CODE,
   phonePreferredActivation: null,
+  signupPhoneUseTempNumber: false,
+  signupPhoneTempNumberDurationHours: 2,
 };
 
 const PERSISTED_SETTING_KEYS = Object.keys(PERSISTED_SETTING_DEFAULTS);
@@ -12321,6 +12323,7 @@ const step5Executor = self.MultiPageBackgroundStep5?.createStep5Executor({
   generateRandomBirthday,
   generateRandomName,
   getState,
+  setState,
   sendToContentScript,
 });
 const step6Executor = self.MultiPageBackgroundStep6?.createStep6Executor({
